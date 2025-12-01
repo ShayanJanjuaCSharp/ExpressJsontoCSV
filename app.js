@@ -8,6 +8,33 @@ app.get("/", (req, res) => res.type('html').send(html));
 
 app.use(express.json());
 
+
+// CORS: tighten origins for production; use '*' only when appropriate
+const allowedOrigins = [
+  "http://localhost:5500",           // your local page while testing
+  "https://your-frontend-domain"     // if you host a real frontend later
+];
+
+
+app.use(cors({
+  origin: (origin, cb) => {
+    // allow tools (like curl/Postman) that omit origin
+    if (!origin) return cb(null, true);
+    if (allowedOrigins.includes(origin)) return cb(null, true);
+    cb(new Error("Not allowed by CORS"));
+  },
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "x-api-key"],
+  credentials: false,
+  maxAge: 600, // cache preflight for 10 minutes
+}));
+
+// Explicit preflight handler (ensures no redirect and proper headers)
+app.options("/submit", (req, res) => {
+  res.sendStatus(204);
+});
+
+
 const csvFilePath = path.join(__dirname, "data.csv");
 
 
