@@ -1,8 +1,39 @@
 const express = require("express");
 const app = express();
 const port = process.env.PORT || 3001;
+const fs = require("fs");
+const path = require("path");
 
 app.get("/", (req, res) => res.type('html').send(html));
+
+app.use(express.json());
+
+const csvFilePath = path.join(__dirname, "data.csv");
+
+
+if (!fs.existsSync(csvFilePath)) {
+  fs.writeFileSync(csvFilePath, "field1,field2,field3,field4\n");
+}
+
+
+app.post("/submit", (req, res) => {
+  const { field1, field2, field3, field4 } = req.body;
+
+  // Validate input
+  if (!field1 || !field2 || !field3 || !field4) {
+    return res.status(400).json({ error: "All 4 fields are required" });
+  }
+
+  // Append to CSV
+  const row = `${field1},${field2},${field3},${field4}\n`;
+  fs.appendFile(csvFilePath, row, (err) => {
+   if (err) {
+      console.error(err);
+      return res.status(500).json({ error: "Failed to write to CSV" });
+    }
+    res.json({ message: "Data saved successfully" });
+  });
+});
 
 const server = app.listen(port, () => console.log(`Example app listening on port ${port}!`));
 
